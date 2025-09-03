@@ -52,6 +52,5 @@
   "engines": {
     "node": "20.x",
     "npm": "9.x"
-  },
-  "proxy": "http://localhost:3001"
+  }
 }
