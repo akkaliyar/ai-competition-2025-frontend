@@ -42,10 +42,11 @@ This React frontend is configured to work with your Railway backend at:
 - **Local Dev:** Create `.env.local` with `REACT_APP_API_URL=http://localhost:3001/api`
 
 ### Build Configuration
-- **Node Version:** 20.x
+- **Builder:** Dockerfile (more reliable than Nixpacks)
+- **Node Version:** 18.x Alpine
 - **Build Command:** `npm run build`
 - **Start Command:** `npm start` (serves build folder)
-- **Port:** Railway auto-assigns
+- **Port:** 3000 (Railway auto-assigns external port)
 
 ### API Endpoints Connected
 - `GET /api/files` - Load existing files
