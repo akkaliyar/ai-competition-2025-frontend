@@ -23,4 +23,4 @@ RUN npm install -g serve
 EXPOSE $PORT
 
 # Start the application using serve with Railway's PORT
-CMD ["sh", "-c", "serve -s build -l ${PORT:-3000}"]
+CMD ["sh", "-c", "serve -s build -p ${PORT:-3000}"]

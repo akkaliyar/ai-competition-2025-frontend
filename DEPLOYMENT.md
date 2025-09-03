@@ -46,7 +46,7 @@ This React frontend is configured to work with your Railway backend at:
 - **Node Version:** 20.x Alpine (LTS)
 - **NPM Version:** 10.x (compatible with Node 20)
 - **Build Command:** `npm run build`
-- **Start Command:** `serve -s build -l $PORT`
+- **Start Command:** `serve -s build -p $PORT`
 - **Port:** Railway auto-assigns via $PORT variable
 
 ### API Endpoints Connected
@@ -71,7 +71,7 @@ This React frontend is configured to work with your Railway backend at:
 **502 Bad Gateway Error:**
 - Check Railway logs: `railway logs`
 - Verify the app is binding to Railway's $PORT variable
-- Ensure the start command uses correct port: `serve -s build -l $PORT`
+- Ensure the start command uses correct port: `serve -s build -p $PORT`
 
 **Build Failures:**
 ```bash
@@ -90,7 +90,7 @@ npx tsc --noEmit
 **Port Binding Issues:**
 - Railway assigns a dynamic $PORT environment variable
 - The app must listen on this port, not a hardcoded port
-- Current configuration: `serve -s build -l $PORT`
+- Current configuration: `serve -s build -p $PORT` (fixed from -l to -p flag)
 
 ## 📊 Backend Status
 
