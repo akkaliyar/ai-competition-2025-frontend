@@ -16,11 +16,24 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Install serve globally
-RUN npm install -g serve
+# Create a simple server script
+RUN echo 'const express = require("express"); \
+const path = require("path"); \
+const app = express(); \
+const port = process.env.PORT || 3000; \
+app.use(express.static(path.join(__dirname, "build"))); \
+app.get("*", (req, res) => { \
+  res.sendFile(path.join(__dirname, "build", "index.html")); \
+}); \
+app.listen(port, "0.0.0.0", () => { \
+  console.log(`Server running on port ${port}`); \
+});' > server.js
 
-# Expose port (Railway will override this with $PORT)
+# Install express for serving
+RUN npm install express
+
+# Expose port
 EXPOSE $PORT
 
-# Start the application using serve with Railway's PORT
-CMD ["sh", "-c", "serve -s build -p ${PORT:-3000}"]
+# Start the application
+CMD ["node", "server.js"]
