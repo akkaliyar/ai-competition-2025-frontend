@@ -48,14 +48,20 @@ railway up
 
 ## 🔧 Troubleshooting
 
-**CORS Issues:**
-- Ensure your Railway backend allows requests from your frontend domain
-- Add your Railway frontend URL to backend CORS origins
+**Connection Timeout (ERR_CONNECTION_TIMED_OUT):**
+- Check Railway logs: `railway logs`
+- Test health endpoint: `https://your-app.railway.app/health`
+- Verify build directory exists and contains files
+- Check if server is binding to correct port (should show "Server running on port 8080")
 
 **502 Bad Gateway Error:**
 - Check Railway logs: `railway logs`
 - Verify the app is binding to Railway's $PORT variable
 - App now uses custom Express server: `node server.js`
+
+**CORS Issues:**
+- Ensure your Railway backend allows requests from your frontend domain
+- Add your Railway frontend URL to backend CORS origins
 
 **Build Failures:**
 ```bash
