@@ -2,8 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy only the minimal server
-COPY minimal-server.js ./
+# Copy connection test
+COPY check-railway.js ./
 
-# Use minimal server for debugging Railway connection
-CMD ["node", "minimal-server.js"]
+# Use connection test for debugging Railway
+CMD ["node", "check-railway.js"]
