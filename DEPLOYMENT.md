@@ -43,10 +43,11 @@ This React frontend is configured to work with your Railway backend at:
 
 ### Build Configuration
 - **Builder:** Dockerfile (more reliable than Nixpacks)
-- **Node Version:** 18.x Alpine
+- **Node Version:** 20.x Alpine (LTS)
+- **NPM Version:** 10.x (compatible with Node 20)
 - **Build Command:** `npm run build`
-- **Start Command:** `npm start` (serves build folder)
-- **Port:** 3000 (Railway auto-assigns external port)
+- **Start Command:** `serve -s build -l $PORT`
+- **Port:** Railway auto-assigns via $PORT variable
 
 ### API Endpoints Connected
 - `GET /api/files` - Load existing files
@@ -67,6 +68,11 @@ This React frontend is configured to work with your Railway backend at:
 - Ensure your Railway backend allows requests from your frontend domain
 - Add your Railway frontend URL to backend CORS origins
 
+**502 Bad Gateway Error:**
+- Check Railway logs: `railway logs`
+- Verify the app is binding to Railway's $PORT variable
+- Ensure the start command uses correct port: `serve -s build -l $PORT`
+
 **Build Failures:**
 ```bash
 # Local test build
@@ -80,6 +86,11 @@ npx tsc --noEmit
 - Verify backend is running: https://ai-competition-2025-production.up.railway.app/api/files
 - Check Railway logs: `railway logs`
 - Verify environment variables in Railway dashboard
+
+**Port Binding Issues:**
+- Railway assigns a dynamic $PORT environment variable
+- The app must listen on this port, not a hardcoded port
+- Current configuration: `serve -s build -l $PORT`
 
 ## 📊 Backend Status
 

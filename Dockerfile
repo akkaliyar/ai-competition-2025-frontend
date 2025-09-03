@@ -1,5 +1,5 @@
-# Use Node.js 18 Alpine image
-FROM node:18-alpine
+# Use Node.js 20 Alpine image (matches package.json engines)
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
@@ -16,8 +16,11 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Expose port
-EXPOSE 3000
+# Install serve globally
+RUN npm install -g serve
 
-# Start the application
-CMD ["npm", "start"]
+# Expose port (Railway will override this with $PORT)
+EXPOSE $PORT
+
+# Start the application using serve with Railway's PORT
+CMD ["sh", "-c", "serve -s build -l ${PORT:-3000}"]
