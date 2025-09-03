@@ -2,37 +2,21 @@
 
 ## 🚀 Quick Deploy to Railway
 
-This React frontend is configured to work with your Railway backend at:
-**https://ai-competition-2025-production.up.railway.app/api**
+This React frontend connects to: **https://ai-competition-2025-production.up.railway.app/api**
 
-## Method 1: Deploy via Railway Dashboard (Recommended)
+### Deploy via Railway Dashboard
+1. Push to GitHub: `git push origin main`
+2. Go to [Railway Dashboard](https://railway.app/dashboard)
+3. New Project → Deploy from GitHub repo
+4. Select your repository
 
-1. **Push to GitHub:**
-   ```bash
-   git add .
-   git commit -m "Configure for Railway deployment"
-   git push origin main
-   ```
-
-2. **Deploy on Railway:**
-   - Go to [Railway Dashboard](https://railway.app/dashboard)
-   - Click "New Project" → "Deploy from GitHub repo"
-   - Select your repository
-   - Railway will auto-detect the configuration and deploy
-
-## Method 2: Railway CLI
-
-1. **Install Railway CLI:**
-   ```bash
-   npm install -g @railway/cli
-   ```
-
-2. **Login and Deploy:**
-   ```bash
-   railway login
-   railway link
-   railway up
-   ```
+### Deploy via Railway CLI
+```bash
+npm install -g @railway/cli
+railway login
+railway link
+railway up
+```
 
 ## 📋 Configuration Details
 
