@@ -71,10 +71,32 @@ app.get('/health', (req, res) => {
   }
 });
 
-// Catch all handler: send back React's index.html file for client-side routing
+// Simple root route for testing
+app.get('/', (req, res) => {
+  try {
+    console.log('Root route accessed');
+    
+    if (!fs.existsSync(indexPath)) {
+      console.error('Index.html not found at:', indexPath);
+      return res.status(404).send(`
+        <h1>Index.html not found</h1>
+        <p>Build path: ${buildPath}</p>
+        <p>Index path: ${indexPath}</p>
+      `);
+    }
+    
+    console.log('Sending index.html');
+    res.sendFile(indexPath);
+  } catch (err) {
+    console.error('Error serving index.html:', err);
+    res.status(500).send(`Error serving application: ${err.message}`);
+  }
+});
+
+// Catch all handler for other routes
 app.get('*', (req, res) => {
   try {
-    console.log('Serving index.html for:', req.url);
+    console.log('Catch-all route for:', req.url);
     
     if (!fs.existsSync(indexPath)) {
       console.error('Index.html not found at:', indexPath);
