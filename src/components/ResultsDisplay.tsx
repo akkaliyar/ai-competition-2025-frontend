@@ -203,42 +203,42 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ files, onRefresh }) => 
         structuredData.sections.keyValuePairs = keyValuePairs;
       }
       
-      // Extract numeric amounts
-      const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
-      if (amounts.length > 0) {
-        structuredData.sections.numericData = {
-          amounts: amounts.map(amt => parseFloat(amt.replace(/,/g, ''))),
-          currency: 'INR',
-          count: amounts.length
-        };
-      }
+             // Extract numeric amounts
+       const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
+       if (amounts.length > 0) {
+         structuredData.sections.numericData = {
+           amounts: (amounts as string[]).map(amt => parseFloat(amt.replace(/,/g, ''))),
+           currency: 'INR',
+           count: amounts.length
+         };
+       }
       
-      // Extract dates
-      const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
-      if (dates.length > 0) {
-        structuredData.sections.dates = {
-          foundDates: dates,
-          count: dates.length
-        };
-      }
+             // Extract dates
+       const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
+       if (dates.length > 0) {
+         structuredData.sections.dates = {
+           foundDates: dates as string[],
+           count: dates.length
+         };
+       }
       
-      // Extract IDs/Codes
-      const codes = text.match(/[A-Z]{2,8}\d{3,6}/g) || [];
-      if (codes.length > 0) {
-        structuredData.sections.identifiers = {
-          codes: codes,
-          count: codes.length
-        };
-      }
-      
-      // Extract account numbers
-      const accounts = text.match(/\d{10,16}/g) || [];
-      if (accounts.length > 0) {
-        structuredData.sections.accounts = {
-          numbers: accounts,
-          count: accounts.length
-        };
-      }
+             // Extract IDs/Codes
+       const codes = text.match(/[A-Z]{2,8}\d{3,6}/g) || [];
+       if (codes.length > 0) {
+         structuredData.sections.identifiers = {
+           codes: codes as string[],
+           count: codes.length
+         };
+       }
+       
+       // Extract account numbers
+       const accounts = text.match(/\d{10,16}/g) || [];
+       if (accounts.length > 0) {
+         structuredData.sections.identifiers = {
+           numbers: accounts as string[],
+           count: accounts.length
+         };
+       }
       
       return structuredData;
     } catch (error) {
@@ -271,14 +271,14 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ files, onRefresh }) => 
       const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
       if (amounts.length > 0) {
         simpleData.summary.amounts = amounts.map(amt => parseFloat(amt.replace(/,/g, '')));
-        simpleData.summary.totalAmount = amounts.reduce((sum: number, amt: string) => sum + parseFloat(amt.replace(/,/g, '')), 0);
+        simpleData.summary.totalAmount = (amounts as string[]).reduce((sum: number, amt: string) => sum + parseFloat(amt.replace(/,/g, '')), 0);
       }
       
-      // Extract any dates found
-      const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
-      if (dates.length > 0) {
-        simpleData.summary.dates = dates;
-      }
+             // Extract any dates found
+       const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
+       if (dates.length > 0) {
+         simpleData.summary.dates = dates as string[];
+       }
       
       return simpleData;
     } catch (error) {
