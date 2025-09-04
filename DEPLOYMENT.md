@@ -2,7 +2,7 @@
 
 ## 🚀 Quick Deploy to Railway
 
-This React frontend connects to: **https://ai-competition-2025-production.up.railway.app/api**
+This React frontend connects to: **https://ai-competition-2025-backend-production.up.railway.app/api**
 
 ### Deploy via Railway Dashboard
 1. Push to GitHub: `git push origin main`
@@ -21,7 +21,7 @@ railway up
 ## 📋 Configuration Details
 
 ### Environment Variables
-- **Production:** Uses `https://ai-competition-2025-production.up.railway.app/api`
+- **Production:** Uses `https://ai-competition-2025-backend-production.up.railway.app/api`
 - **Override:** Set `REACT_APP_API_URL` in Railway dashboard if needed
 - **Local Dev:** Create `.env.local` with `REACT_APP_API_URL=http://localhost:3001/api`
 
@@ -73,7 +73,7 @@ npx tsc --noEmit
 ```
 
 **API Connection Issues:**
-- Verify backend is running: https://ai-competition-2025-production.up.railway.app/api/files
+- Verify backend is running: https://ai-competition-2025-backend-production.up.railway.app/api/files
 - Check Railway logs: `railway logs`
 - Verify environment variables in Railway dashboard
 

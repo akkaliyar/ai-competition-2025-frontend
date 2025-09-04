@@ -3,7 +3,7 @@
 const getApiBaseUrl = (): string => {
   // Production Railway URL
   if (process.env.NODE_ENV === 'production') {
-    return process.env.REACT_APP_API_URL || 'https://ai-competition-2025-production.up.railway.app/api';
+    return process.env.REACT_APP_API_URL || 'https://ai-competition-2025-backend-production.up.railway.app/api';
   }
   
   // Development environment
