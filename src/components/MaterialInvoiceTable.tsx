@@ -447,9 +447,9 @@ const MaterialInvoiceTable: React.FC<MaterialInvoiceTableProps> = ({ data, fileN
         <h4>📊 Summary</h4>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap' }}>
           <span>📋 Total Items: {rows.length}</span>
-          <span>💰 Total Amount: ₹{rows.reduce((sum, row) => sum + (row.Amount || 0), 0).toFixed(2)}</span>
-          <span>🏷️ Total SGST: ₹{rows.reduce((sum, row) => sum + (row.SGST || 0), 0).toFixed(2)}</span>
-          <span>🏷️ Total CGST: ₹{rows.reduce((sum, row) => sum + (row.CGST || 0), 0).toFixed(2)}</span>
+          <span>💰 Total Amount: ₹{rows.reduce((sum: number, row: any) => sum + (row.Amount || 0), 0).toFixed(2)}</span>
+          <span>🏷️ Total SGST: ₹{rows.reduce((sum: number, row: any) => sum + (row.SGST || 0), 0).toFixed(2)}</span>
+          <span>🏷️ Total CGST: ₹{rows.reduce((sum: number, row: any) => sum + (row.CGST || 0), 0).toFixed(2)}</span>
         </div>
       </div>
     </div>

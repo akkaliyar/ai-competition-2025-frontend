@@ -271,7 +271,7 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ files, onRefresh }) => 
       const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
       if (amounts.length > 0) {
         simpleData.summary.amounts = amounts.map(amt => parseFloat(amt.replace(/,/g, '')));
-        simpleData.summary.totalAmount = amounts.reduce((sum, amt) => sum + parseFloat(amt.replace(/,/g, '')), 0);
+        simpleData.summary.totalAmount = amounts.reduce((sum: number, amt: string) => sum + parseFloat(amt.replace(/,/g, '')), 0);
       }
       
       // Extract any dates found
