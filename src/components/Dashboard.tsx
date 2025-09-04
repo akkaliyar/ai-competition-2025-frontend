@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { ProcessedFile } from '../types/ProcessedFile';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://ai-competition-2025-production.up.railway.app/api';
+import { API_BASE_URL } from '../config/api';
 
 interface DashboardProps {
   files: ProcessedFile[];

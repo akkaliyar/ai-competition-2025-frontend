@@ -1,7 +1,7 @@
-import React, { useState, useRef, useCallback } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface FileUploadProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (file: File) => Promise<void>;
   loading: boolean;
   error: string | null;
   success: string | null;
@@ -17,7 +17,37 @@ const FileUpload: React.FC<FileUploadProps> = ({
 }) => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    
+    if ((error || success) && countdown !== null && countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown(prev => {
+          if (prev !== null && prev > 0) {
+            return prev - 1;
+          }
+          return null;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [error, success, countdown]);
+
+  // Reset countdown when messages change
+  useEffect(() => {
+    if (error || success) {
+      setCountdown(30);
+    } else {
+      setCountdown(null);
+    }
+  }, [error, success]);
 
   const acceptedFileTypes = [
     'image/jpeg',
@@ -31,7 +61,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     'application/vnd.ms-excel'
   ];
 
-  const handleFileSelect = useCallback((file: File) => {
+  const handleFileSelect = (file: File) => {
     onClearMessages();
     
     if (!acceptedFileTypes.includes(file.type)) {
@@ -45,7 +75,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     setSelectedFile(file);
-  }, [acceptedFileTypes, onClearMessages]);
+  };
 
   const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -54,7 +84,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     setDragOver(false);
     
@@ -62,7 +92,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (file) {
       handleFileSelect(file);
     }
-  }, [handleFileSelect]);
+  };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -94,6 +124,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -144,12 +180,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
         {error && (
           <div className="error-message">
             ❌ {error}
+            {countdown !== null && countdown > 0 && (
+              <span className="countdown-timer"> ({formatTime(countdown)})</span>
+            )}
+            <button className="close-button" onClick={onClearMessages}>✗</button>
           </div>
         )}
 
         {success && (
           <div className="success-message">
             ✅ {success}
+            {countdown !== null && countdown > 0 && (
+              <span className="countdown-timer"> ({formatTime(countdown)})</span>
+            )}
+            <button className="close-button" onClick={onClearMessages}>✗</button>
           </div>
         )}
 

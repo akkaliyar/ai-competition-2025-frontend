@@ -28,7 +28,7 @@ tests
 *~
 .DS_Store
 Thumbs.db
-# build - commented out because we need build files for deployment
+build
 dist
 .cache
 .parcel-cache

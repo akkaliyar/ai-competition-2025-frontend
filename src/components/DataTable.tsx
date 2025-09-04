@@ -2,8 +2,6 @@ import React, { useState } from 'react';
 import jsPDF from 'jspdf';
 import { Document, Packer, Paragraph, Table, TableRow, TableCell, WidthType } from 'docx';
 import { saveAs } from 'file-saver';
-import InvoiceTable from './InvoiceTable';
-import MaterialInvoiceTable from './MaterialInvoiceTable';
 
 interface DataTableProps {
   data: any;
@@ -904,7 +902,7 @@ const exportSheetData = async (sheetName: string, sheetData: any) => {
 
   // Check if this is invoice data from the new extraction endpoint
   if (data && (data.type === 'invoice' || data.tables)) {
-    return <InvoiceTable data={data} fileName={fileName} />;
+    return renderInvoiceData(data, fileName);
   }
 
   // Check if this is the new structured invoice data format (per specification)
@@ -965,16 +963,9 @@ const exportSheetData = async (sheetName: string, sheetData: any) => {
         </div>
 
         {activeTab === 'material-ui' ? (
-          <MaterialInvoiceTable 
-            data={data.data} 
-            fileName={fileName} 
-            metadata={data.metadata}
-          />
+          renderMaterialInvoiceData(data.data, fileName, data.metadata)
         ) : (
-          <InvoiceTable 
-            data={data} 
-            fileName={fileName} 
-          />
+          renderStandardInvoiceData(data, fileName)
         )}
       </div>
     );
@@ -1043,17 +1034,59 @@ const exportSheetData = async (sheetName: string, sheetData: any) => {
             </div>
           </div>
 
-          <MaterialInvoiceTable 
-            data={data} 
-            fileName={fileName} 
-            metadata={null}
-          />
+          {renderMaterialInvoiceData(data, fileName, null)}
         </div>
       );
     }
   }
 
   return renderOcrData();
+};
+
+// Helper functions to replace the deleted components
+const renderInvoiceData = (data: any, fileName: string) => {
+  return (
+    <div className="data-table-container">
+      <div className="data-table-header">
+        <h3>🧾 Invoice Data: {fileName}</h3>
+      </div>
+      <div className="tab-content">
+        <div className="empty-state">
+          <p>Invoice data processing is being updated. Please use the standard table view.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const renderMaterialInvoiceData = (data: any, fileName: string, metadata: any) => {
+  return (
+    <div className="data-table-container">
+      <div className="data-table-header">
+        <h3>📊 Material-UI DataGrid: {fileName}</h3>
+      </div>
+      <div className="tab-content">
+        <div className="empty-state">
+          <p>Material-UI DataGrid view is being updated. Please use the standard table view.</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const renderStandardInvoiceData = (data: any, fileName: string) => {
+  return (
+    <div className="data-table-container">
+      <div className="data-table-header">
+        <h3>📋 Standard Table: {fileName}</h3>
+      </div>
+      <div className="tab-content">
+        <div className="empty-state">
+          <p>Standard table view is being updated. Please check back later.</p>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default DataTable;
