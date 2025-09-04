@@ -15,8 +15,8 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Catch all handler: send back React's index.html file for client-side routing
-app.get('*', (req, res) => {
+// Handle all other routes by serving the React app
+app.use((req, res) => {
   res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 
