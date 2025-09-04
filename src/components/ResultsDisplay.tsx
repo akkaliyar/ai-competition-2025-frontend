@@ -203,42 +203,46 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ files, onRefresh }) => 
         structuredData.sections.keyValuePairs = keyValuePairs;
       }
       
-             // Extract numeric amounts
-       const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
-       if (amounts.length > 0) {
-         structuredData.sections.numericData = {
-           amounts: (amounts as string[]).map(amt => parseFloat(amt.replace(/,/g, ''))),
-           currency: 'INR',
-           count: amounts.length
-         };
-       }
+                           // Extract numeric amounts
+        const amountsMatch = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g);
+        const amounts = amountsMatch ? Array.from(amountsMatch) : [];
+        if (amounts.length > 0) {
+          structuredData.sections.numericData = {
+            amounts: amounts.map(amt => parseFloat(amt.replace(/,/g, ''))),
+            currency: 'INR',
+            count: amounts.length
+          };
+        }
       
-             // Extract dates
-       const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
-       if (dates.length > 0) {
-         structuredData.sections.dates = {
-           foundDates: dates as string[],
-           count: dates.length
-         };
-       }
+                           // Extract dates
+        const datesMatch = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g);
+        const dates = datesMatch ? Array.from(datesMatch) : [];
+        if (dates.length > 0) {
+          structuredData.sections.dates = {
+            foundDates: dates,
+            count: dates.length
+          };
+        }
       
-             // Extract IDs/Codes
-       const codes = text.match(/[A-Z]{2,8}\d{3,6}/g) || [];
-       if (codes.length > 0) {
-         structuredData.sections.identifiers = {
-           codes: codes as string[],
-           count: codes.length
-         };
-       }
+                           // Extract IDs/Codes
+        const codesMatch = text.match(/[A-Z]{2,8}\d{3,6}/g);
+        const codes = codesMatch ? Array.from(codesMatch) : [];
+        if (codes.length > 0) {
+          structuredData.sections.identifiers = {
+            codes: codes,
+            count: codes.length
+          };
+        }
        
-       // Extract account numbers
-       const accounts = text.match(/\d{10,16}/g) || [];
-       if (accounts.length > 0) {
-         structuredData.sections.identifiers = {
-           numbers: accounts as string[],
-           count: accounts.length
-         };
-       }
+               // Extract account numbers
+        const accountsMatch = text.match(/\d{10,16}/g);
+        const accounts = accountsMatch ? Array.from(accountsMatch) : [];
+        if (accounts.length > 0) {
+          structuredData.sections.identifiers = {
+            numbers: accounts,
+            count: accounts.length
+          };
+        }
       
       return structuredData;
     } catch (error) {
@@ -268,17 +272,19 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ files, onRefresh }) => 
       };
       
       // Extract any amounts found
-      const amounts = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g) || [];
+      const amountsMatch = text.match(/\d{1,3}(?:,\d{3})*\.\d{2}/g);
+      const amounts = amountsMatch ? Array.from(amountsMatch) : [];
       if (amounts.length > 0) {
         simpleData.summary.amounts = amounts.map(amt => parseFloat(amt.replace(/,/g, '')));
-        simpleData.summary.totalAmount = (amounts as string[]).reduce((sum: number, amt: string) => sum + parseFloat(amt.replace(/,/g, '')), 0);
+        simpleData.summary.totalAmount = amounts.reduce((sum: number, amt: string) => sum + parseFloat(amt.replace(/,/g, '')), 0);
       }
       
-             // Extract any dates found
-       const dates = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g) || [];
-       if (dates.length > 0) {
-         simpleData.summary.dates = dates as string[];
-       }
+                           // Extract any dates found
+        const datesMatch = text.match(/\d{1,2}\/\d{1,2}\/\d{4}|\d{1,2}\s+[A-Za-z]+\s+\d{4}/g);
+        const dates = datesMatch ? Array.from(datesMatch) : [];
+        if (dates.length > 0) {
+          simpleData.summary.dates = dates;
+        }
       
       return simpleData;
     } catch (error) {
