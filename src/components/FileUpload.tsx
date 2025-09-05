@@ -114,7 +114,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
   };
 
-  const handleContainerClick = () => {
+  const handleContainerClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    // Prevent double triggering
+    if (loading || event.target === fileInputRef.current) {
+      return;
+    }
+    
+    // Only trigger file input if not loading and not clicking on the input itself
     fileInputRef.current?.click();
   };
 
@@ -148,6 +154,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             className="file-input"
             accept=".jpg,.jpeg,.png,.gif,.bmp,.webp,.pdf,.xlsx,.xls"
             onChange={handleFileInputChange}
+            onClick={(e) => e.stopPropagation()}
             disabled={loading}
           />
           <div className="file-input-label">

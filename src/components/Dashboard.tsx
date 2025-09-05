@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { ProcessedFile } from '../types/ProcessedFile';
 import { API_BASE_URL } from '../config/api';
@@ -15,26 +15,115 @@ interface DashboardStats {
   excelFiles: number;
   totalSize: number;
   recentActivity: ProcessedFile[];
+  // Bill analytics
+  totalInvoices: number;
+  totalAmount: number;
+  averageAmount: number;
+  todayBills: number;
+  todayAmount: number;
+  processedToday: number;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [selectedTimeRange, setSelectedTimeRange] = useState<'day' | 'week' | 'month' | 'all'>('week');
+  const [dashboardFiles, setDashboardFiles] = useState<ProcessedFile[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    calculateStats();
-  }, [files, selectedTimeRange]);
+  // Function to fetch files from API
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await axios.get(`${API_BASE_URL}/files`);
+      
+      // Handle multiple response formats
+      let filesData = [];
+      if (response.data.success && response.data.data) {
+        // Format: { success: true, data: [...] }
+        filesData = response.data.data;
+      } else if (response.data.status && response.data.data) {
+        // Format: { status: true, data: [...] }
+        filesData = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        // Direct array format
+        filesData = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Single file or object format
+        filesData = [response.data];
+      }
+      
+      // Map API response to ProcessedFile format
+      const mappedFiles = filesData.map((file: any) => ({
+        id: file.id,
+        fileName: file.fileName,
+        fileSize: typeof file.fileSize === 'string' ? parseInt(file.fileSize) : file.fileSize,
+        processedStatus: file.processedStatus,
+        processedDate: file.processedDate,
+        invoiceNo: file.invoiceNo,
+        date: file.date,
+        createdAt: file.createdAt || file.processedDate || new Date().toISOString(), // Use processedDate as fallback
+        fileType: file.fileType, // Will be inferred if missing
+        // Map invoice data to jsonResponse
+        jsonResponse: {
+          id: file.id,
+          invoiceNo: file.invoiceNo,
+          date: file.date,
+          shopName: file.shopName,
+          shopAddress: file.shopAddress,
+          phone: file.phone,
+          patientName: file.patientName,
+          patientPhone: file.patientPhone,
+          prescribedBy: file.prescribedBy,
+          doctorName: file.doctorName,
+          doctorSpecialization: file.doctorSpecialization,
+          doctorPhone: file.doctorPhone,
+          items: file.items,
+          totalQty: file.totalQty,
+          subTotal: file.subTotal,
+          lessDiscount: file.lessDiscount,
+          otherAdj: file.otherAdj,
+          roundOff: file.roundOff,
+          grandTotal: file.grandTotal,
+          amountInWords: file.amountInWords,
+          message: file.message,
+          termsAndConditions: file.termsAndConditions
+        }
+      }));
+      
+      
+      setDashboardFiles(mappedFiles);
+    } catch (err) {
+      console.error('Error fetching dashboard data:', err);
+      setError('Failed to load dashboard data');
+      setDashboardFiles([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const calculateStats = () => {
+  const calculateStats = useCallback(() => {
+    // Use dashboardFiles from API call instead of props files
+    const filesToUse = dashboardFiles.length > 0 ? dashboardFiles : files;
+    
+    
     // Safety check for files array
-    if (!files || files.length === 0) {
+    if (!filesToUse || filesToUse.length === 0) {
       setStats({
         totalFiles: 0,
         imageFiles: 0,
         pdfFiles: 0,
         excelFiles: 0,
         totalSize: 0,
-        recentActivity: []
+        recentActivity: [],
+        totalInvoices: 0,
+        totalAmount: 0,
+        averageAmount: 0,
+        todayBills: 0,
+        todayAmount: 0,
+        processedToday: 0
       });
       return;
     }
@@ -48,29 +137,109 @@ const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
     };
 
     const daysToFilter = timeRanges[selectedTimeRange];
-    const filteredFiles = files.filter(file => {
-      const fileDate = new Date(file.createdAt);
+    const filteredFiles = filesToUse.filter(file => {
+      const fileDate = new Date(file.processedDate || file.createdAt);
       const daysDiff = (now.getTime() - fileDate.getTime()) / (1000 * 3600 * 24);
       return daysDiff <= daysToFilter;
     });
 
+    // Calculate bill analytics
+    const invoiceFiles = filteredFiles.filter(f => f.jsonResponse && f.jsonResponse.grandTotal);
+    
+    const totalAmount = invoiceFiles.reduce((sum, file) => {
+      const amount = parseFloat(file.jsonResponse?.grandTotal || '0');
+      return sum + amount;
+    }, 0);
+    
+    // Today's analytics
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayFiles = filteredFiles.filter(file => {
+      const fileDate = new Date(file.processedDate || file.createdAt);
+      fileDate.setHours(0, 0, 0, 0);
+      return fileDate.getTime() === today.getTime();
+    });
+    
+    const todayInvoiceFiles = todayFiles.filter(f => f.jsonResponse && f.jsonResponse.grandTotal);
+    const todayAmount = todayInvoiceFiles.reduce((sum, file) => {
+      const amount = parseFloat(file.jsonResponse?.grandTotal || '0');
+      return sum + amount;
+    }, 0);
+
     const newStats: DashboardStats = {
       totalFiles: filteredFiles.length,
-      imageFiles: filteredFiles.filter(f => f.fileType === 'image').length,
-      pdfFiles: filteredFiles.filter(f => f.fileType === 'pdf').length,
-      excelFiles: filteredFiles.filter(f => f.fileType === 'excel').length,
-      totalSize: filteredFiles.reduce((sum, file) => sum + file.fileSize, 0),
-      recentActivity: filteredFiles.slice(0, 5)
+      imageFiles: filteredFiles.filter(f => getFileTypeFromName(f) === 'image').length,
+      pdfFiles: filteredFiles.filter(f => getFileTypeFromName(f) === 'pdf').length,
+      excelFiles: filteredFiles.filter(f => getFileTypeFromName(f) === 'excel').length,
+      totalSize: filteredFiles.reduce((sum, file) => sum + (typeof file.fileSize === 'string' ? parseInt(file.fileSize) : file.fileSize), 0),
+      recentActivity: filteredFiles.slice(0, 5),
+      // Bill analytics
+      totalInvoices: invoiceFiles.length,
+      totalAmount: totalAmount,
+      averageAmount: invoiceFiles.length > 0 ? totalAmount / invoiceFiles.length : 0,
+      todayBills: todayInvoiceFiles.length,
+      todayAmount: todayAmount,
+      processedToday: todayFiles.length
     };
 
     setStats(newStats);
-  };
+  }, [files, dashboardFiles, selectedTimeRange]);
+
+  useEffect(() => {
+    calculateStats();
+  }, [calculateStats]);
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchDashboardData();
+  }, [fetchDashboardData]);
+
+  // Enhanced refresh function that fetches fresh data
+  const handleRefresh = useCallback(() => {
+    fetchDashboardData();
+    onRefresh(); // Also call the parent refresh function
+  }, [fetchDashboardData, onRefresh]);
 
   const formatFileSize = (bytes: number): string => {
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     if (bytes === 0) return '0 Bytes';
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
     return Math.round((bytes / Math.pow(1024, i)) * 100) / 100 + ' ' + sizes[i];
+  };
+
+  const formatCurrency = (amount: number): string => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
+  };
+
+  // Helper function to determine file type from filename if fileType is missing
+  const getFileTypeFromName = (file: ProcessedFile): string => {
+    if (file.fileType) return file.fileType;
+    
+    const fileName = file.fileName || file.originalName || file.filename || '';
+    const extension = fileName.toLowerCase().split('.').pop();
+    
+    switch (extension) {
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+      case 'gif':
+      case 'bmp':
+      case 'webp':
+        return 'image';
+      case 'pdf':
+        return 'pdf';
+      case 'xlsx':
+      case 'xls':
+      case 'csv':
+        return 'excel';
+      default:
+        return 'image'; // Default to image for unknown types
+    }
   };
 
   const getFileTypeStats = () => {
@@ -91,7 +260,107 @@ const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
   };
 
   if (!stats) {
-    return <div className="loading">Loading dashboard...</div>;
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <div className="dashboard-title">
+            <h2>📊 Analytics Dashboard</h2>
+            <p>Comprehensive overview of your file processing activities</p>
+          </div>
+          <button onClick={handleRefresh} className="refresh-btn" disabled={loading}>
+            {loading ? '⏳ Loading...' : '🔄 Refresh'}
+          </button>
+        </div>
+        {error ? (
+          <div className="error-message">
+            <p>❌ {error}</p>
+            <button onClick={handleRefresh} className="retry-btn">
+              🔄 Retry
+            </button>
+          </div>
+        ) : (
+          <div className="loading">Loading dashboard...</div>
+        )}
+      </div>
+    );
+  }
+
+  // Show empty state if no files
+  if (stats.totalFiles === 0) {
+    return (
+      <div className="dashboard-container">
+        <div className="dashboard-header">
+          <div className="dashboard-title">
+            <h2>📊 Analytics Dashboard</h2>
+            <p>Comprehensive overview of your file processing activities</p>
+          </div>
+          <button onClick={handleRefresh} className="refresh-btn" disabled={loading}>
+            {loading ? '⏳ Loading...' : '🔄 Refresh'}
+          </button>
+        </div>
+        
+        {/* Basic Analytics - Always Show */}
+        <div className="stats-summary">
+          <div className="summary-card total">
+            <div className="summary-icon">📁</div>
+            <div className="summary-content">
+              <h3>0</h3>
+              <p>Total Files Processed</p>
+            </div>
+          </div>
+
+          <div className="summary-card size">
+            <div className="summary-icon">💾</div>
+            <div className="summary-content">
+              <h3>0 Bytes</h3>
+              <p>Total Data Processed</p>
+            </div>
+          </div>
+
+          <div className="summary-card invoices">
+            <div className="summary-icon">🧾</div>
+            <div className="summary-content">
+              <h3>0</h3>
+              <p>Total Invoices</p>
+            </div>
+          </div>
+
+          <div className="summary-card amount">
+            <div className="summary-icon">💰</div>
+            <div className="summary-content">
+              <h3>₹0.00</h3>
+              <p>Total Amount</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Daily Report Section */}
+        <div className="dashboard-section">
+          <h3>📅 Daily Bill Report</h3>
+          <div className="daily-report">
+            <div className="report-card">
+              <div className="report-icon">📊</div>
+              <div className="report-content">
+                <h4>Today's Processing</h4>
+                <p>Files Processed: <strong>0</strong></p>
+                <p>Bills Generated: <strong>0</strong></p>
+                <p>Total Amount: <strong>₹0.00</strong></p>
+              </div>
+            </div>
+            <div className="report-card">
+              <div className="report-icon">📈</div>
+              <div className="report-content">
+                <h4>Processing Status</h4>
+                <p>Success Rate: <strong>0%</strong></p>
+                <p>Average Amount: <strong>₹0.00</strong></p>
+                <p>Last Updated: <strong>Never</strong></p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    );
   }
 
   return (
@@ -114,8 +383,8 @@ const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
             <option value="month">Last Month</option>
             <option value="all">All Time</option>
           </select>
-          <button onClick={onRefresh} className="refresh-btn">
-            🔄 Refresh
+          <button onClick={handleRefresh} className="refresh-btn" disabled={loading}>
+            {loading ? '⏳ Loading...' : '🔄 Refresh'}
           </button>
         </div>
       </div>
@@ -138,19 +407,44 @@ const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
           </div>
         </div>
 
-        <div className="summary-card success">
-          <div className="summary-icon">✅</div>
+        <div className="summary-card invoices">
+          <div className="summary-icon">🧾</div>
           <div className="summary-content">
-            <h3>{getProcessingSuccessRate()}%</h3>
-            <p>Success Rate</p>
+            <h3>{stats.totalInvoices}</h3>
+            <p>Total Invoices</p>
           </div>
         </div>
 
-        <div className="summary-card activity">
-          <div className="summary-icon">⚡</div>
+        <div className="summary-card amount">
+          <div className="summary-icon">💰</div>
           <div className="summary-content">
-            <h3>{Math.round(stats.totalFiles / Math.max(1, selectedTimeRange === 'day' ? 1 : selectedTimeRange === 'week' ? 7 : 30))}</h3>
-            <p>Avg. Files/Day</p>
+            <h3>{formatCurrency(stats.totalAmount)}</h3>
+            <p>Total Amount</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Daily Bill Report */}
+      <div className="dashboard-section">
+        <h3>📅 Daily Bill Report</h3>
+        <div className="daily-report">
+          <div className="report-card">
+            <div className="report-icon">📊</div>
+            <div className="report-content">
+              <h4>Today's Processing</h4>
+              <p>Files Processed: <strong>{stats.processedToday}</strong></p>
+              <p>Bills Generated: <strong>{stats.todayBills}</strong></p>
+              <p>Total Amount: <strong>{formatCurrency(stats.todayAmount)}</strong></p>
+            </div>
+          </div>
+          <div className="report-card">
+            <div className="report-icon">📈</div>
+            <div className="report-content">
+              <h4>Processing Status</h4>
+              <p>Success Rate: <strong>{getProcessingSuccessRate()}%</strong></p>
+              <p>Average Amount: <strong>{formatCurrency(stats.averageAmount)}</strong></p>
+              <p>Last Updated: <strong>{new Date().toLocaleTimeString()}</strong></p>
+            </div>
           </div>
         </div>
       </div>
@@ -188,20 +482,20 @@ const Dashboard: React.FC<DashboardProps> = ({ files, onRefresh }) => {
             stats.recentActivity.map(file => (
               <div key={file.id} className="activity-item">
                 <div className="activity-icon">
-                  {file.fileType === 'image' ? '🖼️' : 
-                   file.fileType === 'pdf' ? '📕' : '📊'}
+                  {getFileTypeFromName(file) === 'image' ? '🖼️' : 
+                   getFileTypeFromName(file) === 'pdf' ? '📕' : '📊'}
                 </div>
                 <div className="activity-content">
                   <div className="activity-main">
-                    <span className="activity-name">{file.originalName}</span>
-                    <span className="activity-type">{file.fileType.toUpperCase()}</span>
+                    <span className="activity-name">{file.fileName || file.originalName || file.filename || 'Unknown File'}</span>
+                    <span className="activity-type">{getFileTypeFromName(file).toUpperCase()}</span>
                   </div>
                   <div className="activity-details">
-                    <span>{formatFileSize(file.fileSize)}</span>
+                    <span>{formatFileSize(typeof file.fileSize === 'string' ? parseInt(file.fileSize) : file.fileSize)}</span>
                     <span>•</span>
-                    <span>{new Date(file.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(file.processedDate || file.createdAt).toLocaleDateString()}</span>
                     <span>•</span>
-                    <span>{new Date(file.createdAt).toLocaleTimeString()}</span>
+                    <span>{new Date(file.processedDate || file.createdAt).toLocaleTimeString()}</span>
                   </div>
                 </div>
                 <div className="activity-status">

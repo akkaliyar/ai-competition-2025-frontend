@@ -10,6 +10,7 @@ import { API_BASE_URL } from './config/api';
 function App() {
   const [processedFiles, setProcessedFiles] = useState<ProcessedFile[]>([]);
   const [loading, setLoading] = useState(false);
+  const [resultsLoading, setResultsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'results' | 'dashboard'>('upload');
@@ -31,14 +32,48 @@ function App() {
     };
   }, []);
 
-  const loadExistingFiles = async () => {
+  const loadExistingFiles = async (showLoading = false) => {
+    if (showLoading) {
+      setResultsLoading(true);
+    }
+    
     try {
       const response = await axios.get(`${API_BASE_URL}/files`);
-      if (response.data.success) {
-        setProcessedFiles(response.data.data);
+      
+      // Handle multiple response formats
+      let filesData = [];
+      if (response.data.success && response.data.data) {
+        // Format: { success: true, data: [...] }
+        filesData = response.data.data;
+      } else if (response.data.status && response.data.data) {
+        // Format: { status: true, data: [...] }
+        filesData = response.data.data;
+      } else if (Array.isArray(response.data)) {
+        // Direct array format
+        filesData = response.data;
+      } else if (response.data && typeof response.data === 'object') {
+        // Single file or object format
+        filesData = [response.data];
       }
-    } catch (error) {
+      
+      setProcessedFiles(filesData);
+      if (showLoading) {
+        setSuccess(`Loaded ${filesData.length} file${filesData.length !== 1 ? 's' : ''} successfully`);
+        // Auto-hide success message after 5 seconds
+        setTimeout(() => {
+          setSuccess(null);
+        }, 5000);
+      }
+    } catch (error: any) {
       console.error('Error loading existing files:', error);
+      if (showLoading) {
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to load files';
+        setError(`Error: ${errorMessage}`);
+      }
+    } finally {
+      if (showLoading) {
+        setResultsLoading(false);
+      }
     }
   };
 
@@ -123,10 +158,15 @@ function App() {
     if (successTimeoutRef.current) clearTimeout(successTimeoutRef.current);
   };
 
-  const handleTabChange = (tabId: 'upload' | 'results' | 'dashboard') => {
+  const handleTabChange = async (tabId: 'upload' | 'results' | 'dashboard') => {
     // Clear messages when changing tabs
     clearMessages();
     setActiveTab(tabId);
+    
+    // Load fresh data when Results tab is clicked
+    if (tabId === 'results') {
+      await loadExistingFiles(true); // Show loading state
+    }
   };
 
   const tabs = [
@@ -173,7 +213,8 @@ function App() {
         {activeTab === 'results' && (
           <ResultsDisplay 
             files={processedFiles}
-            onRefresh={loadExistingFiles}
+            onRefresh={() => loadExistingFiles(true)}
+            loading={resultsLoading}
           />
         )}
 

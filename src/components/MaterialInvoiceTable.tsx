@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import jsPDF from 'jspdf';
+import { InvoiceData, InvoiceItem } from '../types/ProcessedFile';
 
 // Optional Material-UI DataGrid - gracefully handles missing dependency
 let DataGrid: any = null;
@@ -18,12 +19,35 @@ try {
 }
 
 interface MaterialInvoiceTableProps {
-  data: any[];
+  data: any[] | InvoiceData;
   fileName: string;
   metadata?: any;
 }
 
 const MaterialInvoiceTable: React.FC<MaterialInvoiceTableProps> = ({ data, fileName, metadata }) => {
+  
+  // Convert invoice data to table format if needed
+  const tableData = useMemo(() => {
+    // Check if data is InvoiceData structure
+    if (data && typeof data === 'object' && 'items' in data && Array.isArray((data as InvoiceData).items)) {
+      const invoiceData = data as InvoiceData;
+      return invoiceData.items.map((item: InvoiceItem, index: number) => ({
+        id: index + 1,
+        Product: item.itemDescription,
+        Batch: item.batchNo,
+        HSN: '', // Not available in new structure
+        Expiry: item.exp,
+        Qty: item.qty,
+        MRP: item.mrp,
+        Rate: item.rate,
+        Amount: item.amount,
+        Pack: item.pack,
+        sNo: item.sNo
+      }));
+    }
+    // Return data as is if it's already in table format
+    return Array.isArray(data) ? data : [];
+  }, [data]);
   
   // Define columns as per specification
   const columns = useMemo(() => {
@@ -138,7 +162,7 @@ const MaterialInvoiceTable: React.FC<MaterialInvoiceTableProps> = ({ data, fileN
 
   // Prepare rows with IDs for DataGrid
   const rows = useMemo(() => {
-    return data.map((row, index) => ({
+    return tableData.map((row, index) => ({
       id: index,
       ...row,
       // Ensure numeric fields are numbers
@@ -149,7 +173,7 @@ const MaterialInvoiceTable: React.FC<MaterialInvoiceTableProps> = ({ data, fileN
       SGST: typeof row.SGST === 'string' ? parseFloat(row.SGST) || 0 : row.SGST || 0,
       CGST: typeof row.CGST === 'string' ? parseFloat(row.CGST) || 0 : row.CGST || 0,
     }));
-  }, [data]);
+  }, [tableData]);
 
   // Export PDF function matching specification
   const exportPDF = () => {
@@ -246,7 +270,12 @@ const MaterialInvoiceTable: React.FC<MaterialInvoiceTableProps> = ({ data, fileN
     }
   };
 
-  if (!data || data.length === 0) {
+  // Check if data is empty or invalid
+  const isEmpty = !data || 
+    (Array.isArray(data) && data.length === 0) ||
+    (typeof data === 'object' && !('items' in data) && !Array.isArray(data));
+    
+  if (isEmpty) {
     return (
       <div style={{ padding: '20px', textAlign: 'center' }}>
         <h3>📄 No Invoice Data Available</h3>
